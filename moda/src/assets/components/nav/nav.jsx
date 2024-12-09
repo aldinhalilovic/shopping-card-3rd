@@ -1,42 +1,46 @@
-import {
-  SearchOutlined,
-  ShoppingCartOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
-import React from "react";
-import { Link } from "react-router-dom";
+import { UserOutlined } from "@ant-design/icons";
+import { Link, useNavigate } from "react-router-dom";
+import logo from "./logo.png";
 import "./nav.css";
-import logo from "./logo.png"
+
 export default function Nav() {
+  const navigate = useNavigate();
+
   return (
     <>
       <div className="nav1">
         <p>MEGA SALE</p>
         <p>Take 10% off</p>
       </div>
+
       <div className="nav2">
-        <div><img src={logo} alt="" /></div>
+        <div>
+          <img src={logo} alt="" />
+        </div>
+
         <div className="nav22">
-          <div>
-            <Link to={"/"} style={{color:"black",textDecoration:"none"}}>HOME PAGE</Link>
-          </div>
-          <div>
-            <Link to={"/shop"} style={{color:"black",textDecoration:"none"}}>SHOP</Link>
-          </div>
-          <div>
-            <Link to={"/weedings"} style={{color:"black",textDecoration:"none"}}>WEEDINGS</Link>
-          </div>
-          <div>
-            <Link to={"/services"} style={{color:"black",textDecoration:"none"}}>SERVICES</Link>
-          </div>
-          <div>
-            <Link to={"/contact"} style={{color:"black",textDecoration:"none"}}>CONTACTS</Link>
-          </div>
+          <Link to={"/"} style={{ color: "black", textDecoration: "none" }}>
+            HOME PAGE
+          </Link>
+
+          <Link
+            to={"/products"}
+            style={{ color: "black", textDecoration: "none" }}
+          >
+            Products
+          </Link>
         </div>
         <div>
-        <UserOutlined style={{ fontSize: "3vh", color: "black", paddingRight:'5px',fontWeight:"900",font:"bold"}} />
-        <ShoppingCartOutlined style={{ fontSize: "3vh", color: "black" ,paddingRight:'5px'}} />
-          <SearchOutlined style={{ fontSize: "3vh", color: "black",paddingRight:'5px' }} />
+          <UserOutlined
+            onClick={() => navigate("/shop")}
+            style={{
+              fontSize: "3vh",
+              color: "black",
+              paddingRight: "5px",
+              fontWeight: "900",
+              font: "bold",
+            }}
+          />
         </div>
       </div>
     </>
