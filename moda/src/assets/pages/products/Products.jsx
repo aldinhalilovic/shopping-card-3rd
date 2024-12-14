@@ -12,10 +12,14 @@ import ShopCard from "../../components/shopCard/shopCard";
 import axios from "axios";
 import { useEffect } from "react";
 import { SearchOutlined } from "@ant-design/icons";
+import { useContext } from "react";
+import { AppContext } from "../../../context/AppContext";
 
 export default function Products() {
   // notifications
   const [api, contextHolder] = notification.useNotification();
+
+  const { favorites, setFavorites } = useContext(AppContext);
 
   // drawer
   const [loading, setLoading] = useState(false);
@@ -29,6 +33,16 @@ export default function Products() {
   // content
   const [allProducts, setAllProducts] = useState([]);
   const [categoryList, setCategoryList] = useState([]);
+
+  const changeFavorite = (id) => {
+    setFavorites((prevFavorites) => {
+      if (prevFavorites.includes(id)) {
+        return prevFavorites.filter((product) => product !== id);
+      } else {
+        return [...prevFavorites, id];
+      }
+    });
+  };
 
   const showDrawer = () => {
     setOpen(true);
@@ -116,6 +130,8 @@ export default function Products() {
               title={product.title}
               description={product.description}
               image={product.thumbnail}
+              favorite={favorites.includes(`${product.id}`)}
+              changeFavorite={() => changeFavorite(`${product.id}`)}
             />
           ))
         )}
