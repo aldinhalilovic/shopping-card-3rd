@@ -2,11 +2,12 @@ import { Button, Drawer } from "antd";
 import { useState } from "react";
 import "./shop.css";
 import ShopCard from "../../components/shopCard/shopCard";
-import cardImg1 from "./Rectangle 3.png";
-import cardImg2 from "./Rectangle 4.png";
-import cardImg3 from "./Rectangle 5.png";
-import cardImg4 from "./Rectangle 6.png";
+import { useContext } from "react";
+import { AppContext } from "../../../context/AppContext";
+import { useNavigate } from "react-router-dom";
+
 export default function Shop() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const showDrawer = () => {
     setOpen(true);
@@ -15,6 +16,8 @@ export default function Shop() {
   const onClose = () => {
     setOpen(false);
   };
+
+  const { favorites } = useContext(AppContext);
 
   return (
     <>
@@ -55,20 +58,27 @@ export default function Shop() {
           </div>
         </form>
       </Drawer>
-      <div className="shopGlavni">
-        <ShopCard title="Winter jacket" description="$110" image={cardImg2} />
-        <ShopCard title="T-shirt" description="$50" image={cardImg3} />
-        <ShopCard title="T-shirt " description="$50" image={cardImg4} />
-        <ShopCard title="Outhum jacket" description="$50" image={cardImg1} />
-        <ShopCard title="Outhum jacket" description="$50" image={cardImg1} />
-        <ShopCard title="T-shirt" description="$50" image={cardImg3} />
-        <ShopCard title="Winter jacket" description="$110" image={cardImg2} />
-        <ShopCard title="T-shirt " description="$50" image={cardImg4} />
-        <ShopCard title="Winter jacket" description="$110" image={cardImg2} />
-        <ShopCard title="Outhum jacket" description="$50" image={cardImg1} />
-        <ShopCard title="T-shirt " description="$50" image={cardImg4} />
-        <ShopCard title="T-shirt" description="$50" image={cardImg3} />
-      </div>
+
+      {favorites.length > 0 ? (
+        <div className="shopGlavni">
+          {favorites.map((product) => (
+            <ShopCard product={product} key={product.id} />
+          ))}
+        </div>
+      ) : (
+        <div
+          style={{
+            height: "50vh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <h1>Nema proizvoda, molimo vas izaberite neke</h1>
+          <Button onClick={() => navigate("/products")}>Proizvodi</Button>
+        </div>
+      )}
     </>
   );
 }

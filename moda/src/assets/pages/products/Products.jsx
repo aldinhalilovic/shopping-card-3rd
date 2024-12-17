@@ -37,8 +37,16 @@ export default function Products() {
   const changeFavorite = (id) => {
     setFavorites((prevFavorites) => {
       if (prevFavorites.includes(id)) {
+        api.info({
+          message: `You have removed product from your cart!`,
+          placement: "topRight",
+        });
         return prevFavorites.filter((product) => product !== id);
       } else {
+        api.info({
+          message: `You have successfully added product to your cart!`,
+          placement: "topRight",
+        });
         return [...prevFavorites, id];
       }
     });
@@ -127,9 +135,7 @@ export default function Products() {
           allProducts.map((product) => (
             <ShopCard
               key={product.id}
-              title={product.title}
-              description={product.description}
-              image={product.thumbnail}
+              product={product}
               favorite={favorites.includes(`${product.id}`)}
               changeFavorite={() => changeFavorite(`${product.id}`)}
             />
