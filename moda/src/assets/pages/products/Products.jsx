@@ -6,151 +6,194 @@ import {
   Pagination,
   Spin,
 } from "antd";
-import { useState } from "react";
-import "./weedings.css";
-import ShopCard from "../../components/shopCard/shopCard";
-import axios from "axios";
-import { useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { SearchOutlined } from "@ant-design/icons";
-import { useContext } from "react";
+import Input from "antd/es/input/Input";
+import axios from "axios";
+import { useDebounce } from "../../../utils";
 import { AppContext } from "../../../context/AppContext";
+import ShopCard from "../../components/shopCard/shopCard";
+import "./weedings.css";
 
 export default function Products() {
-  // notifications
+  // Notification
   const [api, contextHolder] = notification.useNotification();
 
+  // Context
   const { favorites, setFavorites } = useContext(AppContext);
 
-  // drawer
+  // State Management
   const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
-
-  // pagination
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [filter, setFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage, setProductsPerPage] = useState(30);
-  const [totalProducts, setTotalProducts] = useState(null);
-
-  // content
+  const [productsPerPage] = useState(30);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
   const [allProducts, setAllProducts] = useState([]);
   const [categoryList, setCategoryList] = useState([]);
 
-  const changeFavorite = (id) => {
+  // Handlers
+  const toggleFavorite = (id) => {
     setFavorites((prevFavorites) => {
-      if (prevFavorites.includes(id)) {
-        api.info({
-          message: `You have removed product from your cart!`,
-          placement: "topRight",
-        });
-        return prevFavorites.filter((product) => product !== id);
-      } else {
-        api.info({
-          message: `You have successfully added product to your cart!`,
-          placement: "topRight",
-        });
-        return [...prevFavorites, id];
-      }
+      const updatedFavorites = prevFavorites.includes(id)
+        ? prevFavorites.filter((product) => product !== id)
+        : [...prevFavorites, id];
+
+      api.info({
+        message: `Product ${
+          prevFavorites.includes(id) ? "removed from" : "added to"
+        } your cart!`,
+        placement: "topRight",
+      });
+
+      return updatedFavorites;
     });
   };
 
-  const showDrawer = () => {
-    setOpen(true);
+  const handleDrawerOpen = () => setDrawerOpen(true);
+  const handleDrawerClose = () => setDrawerOpen(false);
+
+  const handleCategorySelect = async (categories) => {
+    const selectedCategory = categories[0];
+    setFilter(selectedCategory);
+
+    try {
+      const { data } = await axios.get(
+        `https://dummyjson.com/products/category/${selectedCategory}`
+      );
+
+      setAllProducts(data.products);
+      setTotalProducts(data.total);
+
+      api.success({
+        message: "Category Selected",
+        description: `You have successfully selected ${selectedCategory}.`,
+        duration: 5,
+      });
+    } catch (error) {
+      console.error("Error fetching category products", error);
+    }
   };
 
-  const onClose = () => {
-    setOpen(false);
-  };
-
-  const fetchHomePageProducs = async () => {
+  const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
+      const { data } = await axios.get(
         `https://dummyjson.com/products?limit=${productsPerPage}&skip=${
           productsPerPage * (currentPage - 1)
         }`
       );
-
-      console.log(response.data);
-      setTotalProducts(response.data.total);
-
-      setAllProducts(response.data.products);
+      setAllProducts(data.products);
+      setTotalProducts(data.total);
     } catch (error) {
-      console.error("Error while fetching data", error);
+      console.error("Error fetching products", error);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  const fetchCategoryList = async () => {
+  const fetchCategories = async () => {
     try {
-      const response = await axios.get(
+      const { data } = await axios.get(
         "https://dummyjson.com/products/category-list"
       );
-
-      setCategoryList(response.data);
+      setCategoryList(data);
     } catch (error) {
-      console.error("Error while fetching data", error);
+      console.error("Error fetching categories", error);
     }
   };
 
-  const selectCategory = (categories) => {
-    console.log(categories, "CATEGORIES");
+  const searchProducts = () => {
+    if (!debouncedSearch) {
+      fetchProducts();
+      return;
+    }
 
-    api.open({
-      message: "Congratulations",
-      description: "You have successfully selected " + categories[0],
-      duration: 5,
-    });
+    const filteredProducts = allProducts.filter((product) =>
+      product.title.toLowerCase().startsWith(debouncedSearch.toLowerCase())
+    );
+    setAllProducts(filteredProducts);
+    setTotalProducts(filteredProducts.length);
   };
 
+  // Effects
   useEffect(() => {
-    fetchHomePageProducs();
+    fetchProducts();
   }, [currentPage]);
 
   useEffect(() => {
-    fetchCategoryList();
+    fetchCategories();
   }, []);
 
+  useEffect(() => {
+    searchProducts();
+  }, [debouncedSearch]);
+
   return (
-    <>
+    <div>
       {contextHolder}
 
+      {/* Drawer */}
       <FloatButton
-        onClick={showDrawer}
+        onClick={handleDrawerOpen}
         shape="circle"
         type="primary"
         style={{ insetInlineEnd: 50, height: 75, width: 75 }}
         icon={<SearchOutlined />}
       />
-      <Drawer title="FILTERS" onClose={onClose} open={open} placement="left">
+      <Drawer
+        title="Filters"
+        onClose={handleDrawerClose}
+        open={drawerOpen}
+        placement="left"
+      >
         <Checkbox.Group
           style={{ gap: 20, textTransform: "capitalize" }}
           options={categoryList}
-          onChange={selectCategory}
+          value={filter}
+          onChange={handleCategorySelect}
         />
       </Drawer>
+
+      {/* Search */}
+      <div style={{ margin: "30px auto", width: "max-content" }}>
+        <Input
+          style={{ width: "350px" }}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      {/* Product List */}
       <div className="shopGlavni">
         {loading ? (
-          <Spin size="large">Loading...</Spin>
-        ) : (
+          <Spin size="large" />
+        ) : allProducts.length > 0 ? (
           allProducts.map((product) => (
             <ShopCard
               key={product.id}
               product={product}
-              favorite={favorites.includes(`${product.id}`)}
-              changeFavorite={() => changeFavorite(`${product.id}`)}
+              favorite={favorites.includes(product.id)}
+              changeFavorite={() => toggleFavorite(product.id)}
             />
           ))
+        ) : (
+          <h1>No products available</h1>
         )}
       </div>
+
+      {/* Pagination */}
       <Pagination
         align="center"
         style={{ margin: "40px 0" }}
         current={currentPage}
         total={totalProducts}
         showSizeChanger={false}
-        pageSize={30}
+        pageSize={productsPerPage}
         onChange={(page) => setCurrentPage(page)}
       />
-    </>
+    </div>
   );
 }

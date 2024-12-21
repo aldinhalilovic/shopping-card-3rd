@@ -11,8 +11,6 @@ export default function ShopCard({ product }) {
 
   const isFavorite = favorites.find((favorit) => favorit.id === product.id);
 
-  console.log(favorites, "FAVORITES");
-
   return (
     <Card
       hoverable
